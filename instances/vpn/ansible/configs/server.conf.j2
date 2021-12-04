@@ -1,0 +1,32 @@
+server {{ openvpn_network }} {{ openvpn_subnetmask }}
+
+verb 3
+
+key /etc/openvpn/keys/openvpn-server.key
+ca /etc/openvpn/keys/ca.crt
+cert /etc/openvpn/keys/openvpn-server.crt
+dh /etc/openvpn/keys/dh.pem
+tls-auth /etc/openvpn/keys/ta.key 0
+
+key-direction 0
+keepalive 10 60
+
+persist-key
+persist-tun
+
+proto udp
+port 1194
+dev tun
+
+status openvpn-status.log
+
+user nobody
+group nogroup
+
+explicit-exit-notify 1
+remote-cert-tls client
+
+route {{ openvpn_route_network }} {{ openvpn_route_subnetmask }}
+
+push "dhcp-option DNS {{ openvpn_dns_1 }}"
+push "dhcp-option DNS {{ openvpn_dns_2 }}"

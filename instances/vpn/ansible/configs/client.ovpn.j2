@@ -1,0 +1,10 @@
+client
+nobind
+dev tun
+remote-cert-tls server
+
+remote {{ server_ip }} 1194 udp
+
+key-direction 1
+
+redirect-gateway def1

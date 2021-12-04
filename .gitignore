@@ -1,0 +1,8 @@
+.idea
+*.pem
+hosts
+*.tfstate
+*.tfstate.backup
+*.ovpn
+.terraform
+terraform.tfvars

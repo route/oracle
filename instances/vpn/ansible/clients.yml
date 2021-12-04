@@ -1,0 +1,46 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: Create clients directory
+      file:
+        path: ~/EasyRSA-{{ easy_rsa_version }}/clients
+        state: directory
+
+    - name: Generate clients
+      shell: ./easyrsa build-client-full {{ item }} nopass
+      args:
+        chdir: ~/EasyRSA-{{ easy_rsa_version }}
+        creates: ~/EasyRSA-{{ easy_rsa_version }}/pki/issued/{{ item }}.crt
+      with_items: "{{ clients }}"
+
+    - name: Copy client config template
+      template:
+        src: ./configs/client.ovpn.j2
+        dest: ~/EasyRSA-{{ easy_rsa_version }}/clients/template.ovpn
+
+    - name: Inject client keys
+      shell: >
+        cp clients/template.ovpn clients/{{ item }}.ovpn &&
+        printf "<key>\n" >> clients/{{ item }}.ovpn &&
+        cat ./pki/private/{{ item }}.key >> clients/{{ item }}.ovpn &&
+        printf "</key>\n" >> clients/{{ item }}.ovpn &&
+        printf "<cert>\n" >> clients/{{ item }}.ovpn &&
+        sed -n '/^-----BEGIN/,/^-----END/p' ./pki/issued/{{ item }}.crt >> clients/{{ item }}.ovpn &&
+        printf "</cert>\n" >> clients/{{ item }}.ovpn &&
+        printf "<ca>\n" >> clients/{{ item }}.ovpn &&
+        cat ./pki/ca.crt >> clients/{{ item }}.ovpn &&
+        printf "</ca>\n" >> clients/{{ item }}.ovpn &&
+        printf "<tls-auth>\n" >> clients/{{ item }}.ovpn &&
+        cat ./ta.key >> clients/{{ item }}.ovpn &&
+        printf "</tls-auth>\n" >> clients/{{ item }}.ovpn
+      args:
+        chdir: ~/EasyRSA-{{ easy_rsa_version }}
+        creates: ~/EasyRSA-{{ easy_rsa_version }}/clients/{{ item }}.ovpn
+      with_items: "{{ clients }}"
+
+    - name: Download client files
+      fetch:
+        src: ~/EasyRSA-{{ easy_rsa_version }}/clients/{{ item }}.ovpn
+        dest: ./clients/
+        flat: yes
+      with_items: "{{ clients }}"

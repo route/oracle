@@ -1,0 +1,98 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: Apt update and upgrade
+      apt:
+        upgrade: yes
+        update_cache: yes
+        force_apt_get: yes
+        cache_valid_time: 3600
+
+    - name: Install openvpn
+      apt:
+        name: openvpn
+        state: present
+
+    - name: Download EasyRSA
+      get_url:
+        url: https://github.com/OpenVPN/easy-rsa/releases/download/v{{ easy_rsa_version }}/EasyRSA-{{ easy_rsa_version }}.tgz
+        dest: ~/EasyRSA-{{ easy_rsa_version }}.tgz
+
+    - name: Extract EasyRSA
+      unarchive:
+        src: ~/EasyRSA-{{ easy_rsa_version }}.tgz
+        dest: ~/
+        remote_src: True
+
+    - name: Copy vars file
+      template:
+        src: ./configs/vars.j2
+        dest: ~/EasyRSA-{{ easy_rsa_version }}/vars
+
+    - name: Generate server keys
+      shell: >
+        ./easyrsa init-pki &&
+        ./easyrsa build-ca nopass &&
+        ./easyrsa build-server-full openvpn-server nopass &&
+        ./easyrsa gen-dh &&
+        openvpn --genkey --secret ta.key
+      args:
+        chdir: ~/EasyRSA-{{ easy_rsa_version }}
+
+    - name: Create keys directory
+      file:
+        path: /etc/openvpn/keys
+        state: directory
+      become: yes
+
+    - name: Copy server keys
+      copy:
+        src: "{{ item.src }}"
+        dest: /etc/openvpn/keys
+        remote_src: True
+      with_items:
+        - { src: '/home/$SUDO_USER/EasyRSA-{{ easy_rsa_version }}/pki/dh.pem' }
+        - { src: '/home/$SUDO_USER/EasyRSA-{{ easy_rsa_version }}/pki/ca.crt' }
+        - { src: '/home/$SUDO_USER/EasyRSA-{{ easy_rsa_version }}/pki/issued/openvpn-server.crt' }
+        - { src: '/home/$SUDO_USER/EasyRSA-{{ easy_rsa_version }}/pki/private/openvpn-server.key' }
+        - { src: '/home/$SUDO_USER/EasyRSA-{{ easy_rsa_version }}/ta.key' }
+      become: yes
+
+    - name: Configure server
+      template:
+        src: ./configs/server.conf.j2
+        dest: /etc/openvpn/server.conf
+      become: yes
+
+    - name: Forward traffic
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        sysctl_set: yes
+        state: present
+        reload: yes
+      become: yes
+
+    - name: Get default interface
+      shell: ip route | grep default | awk '{print $5}'
+      register: iface
+
+    - name: Configure iptables rules
+      template:
+        src: ./configs/rules.v4.j2
+        dest: /etc/iptables/rules.v4
+        owner: root
+        group: root
+        mode: '0644'
+      become: yes
+
+    - name: Apply iptable rules
+      shell: iptables-restore < /etc/iptables/rules.v4
+      become: yes
+
+    - name: Start openvpn
+      systemd:
+        name: openvpn@server
+        enabled: yes
+        state: started
+      become: yes
