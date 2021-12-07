@@ -41,6 +41,6 @@
     - name: Download client files
       fetch:
         src: ~/EasyRSA-{{ easy_rsa_version }}/clients/{{ item }}.ovpn
-        dest: ./clients/
+        dest: ../clients/
         flat: yes
       with_items: "{{ clients }}"

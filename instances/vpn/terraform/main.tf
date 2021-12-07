@@ -53,6 +53,6 @@ resource "oci_core_instance" "vpn" {
   }
 }
 
-output "instance_public_ips" {
-  value = [oci_core_instance.vpn.*.public_ip]
+output "instance_public_ip" {
+  value = oci_core_instance.vpn.public_ip
 }

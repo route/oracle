@@ -6,3 +6,4 @@ hosts
 *.ovpn
 .terraform
 terraform.tfvars
+environment

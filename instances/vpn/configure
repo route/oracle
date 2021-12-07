@@ -1,0 +1,72 @@
+#!/bin/sh
+
+. ./environment
+
+tfvars_file="./terraform/terraform.tfvars"
+
+cat <<EOF > $tfvars_file
+tenancy_ocid            = "$TENANCY_OCID"
+compartment_ocid        = "$COMPARTMENT_OCID"
+user_ocid               = "$USER_OCID"
+fingerprint             = "$FINGERPRINT"
+private_key_path        = "./config/ssh/$PRIVATE_KEY_NAME"
+instance_ssh_public_key = "$INSTANCE_SSH_PUBLIC_KEY"
+region                  = "$REGION"
+instance_display_name   = "$INSTANCE_DISPLAY_NAME"
+instance_shape          = "$INSTANCE_SHAPE"
+instance_cpu            = $INSTANCE_CPU
+instance_memory         = $INSTANCE_MEMORY
+instance_image_ocid     = "$INSTANCE_IMAGE_OCID"
+EOF
+
+cd terraform
+
+ip=$(terraform output -json instance_public_ip 2>/dev/null)
+exit_code="$?"
+
+if [ -z "$ip" ] || [ "$exit_code" -ne 0 ]; then
+  terraform init && terraform apply
+fi
+
+ip=$(terraform output -raw instance_public_ip 2>/dev/null)
+
+if [ -z "$ip" ]; then
+  echo "Terraform didn't return valid IP address. We are done."
+  exit 1
+else
+  cd ../ansible
+
+  hosts_file="./hosts"
+
+  cat <<EOF > $hosts_file
+[vpn]
+$ip
+
+[all:vars]
+server_ip=$ip
+clients='$OPENVPN_CLIENTS'
+ansible_ssh_user=$OPENVPN_ANSIBLE_SSH_USER
+easy_rsa_version=$OPENVPN_EASY_RSA_VERSION
+easy_rsa_country=$OPENVPN_EASY_RSA_COUNTRY
+easy_rsa_province=$OPENVPN_EASY_RSA_PROVINCE
+easy_rsa_city=$OPENVPN_EASY_RSA_CITY
+easy_rsa_org=$OPENVPN_EASY_RSA_ORG
+easy_rsa_email=$OPENVPN_EASY_RSA_EMAIL
+easy_rsa_ou=$OPENVPN_EASY_RSA_OU
+easy_rsa_key_size=$OPENVPN_EASY_RSA_KEY_SIZE
+easy_rsa_ca_expire=$OPENVPN_EASY_RSA_CA_EXPIRE
+easy_rsa_cert_expire=$OPENVPN_EASY_RSA_CERT_EXPIRE
+openvpn_network=$OPENVPN_NETWORK
+openvpn_subnetmask=$OPENVPN_SUBNETMASK
+openvpn_route_network=$OPENVPN_ROUTE_NETWORK
+openvpn_route_subnetmask=$OPENVPN_ROUTE_SUBNETMASK
+openvpn_dns_1=$OPENVPN_DNS_1
+openvpn_dns_2=$OPENVPN_DNS_2
+EOF
+
+  if [ "$1" = "client" ]; then
+    ansible-playbook -i ./hosts clients.yml
+  else
+    ansible-playbook -i ./hosts setup.yml && ansible-playbook -i ./hosts clients.yml
+  fi
+fi
