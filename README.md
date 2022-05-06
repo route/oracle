@@ -10,7 +10,7 @@ We are going to create OpenVPN server using [Terraform](https://learn.hashicorp.
 installed, as I won't go into installation details here.
 
 At this point, you'll have set [Oracle account](https://signup.cloud.oracle.com/?language=en&sourceType=:ow:o:p:feb:0916FreePageBannerButton&intcmp=:ow:o:p:feb:0916FreePageBannerButton),
-and it's time to create API keys. Go to your `Profile` ➞ `API keys` and click `Add API Key`. Copy what you are given and
+and it's time to create API keys. Go to your "Profile" ➞ "API keys" and click "Add API Key". Copy what you are given and
 download pem key to `~/.oci` folder.
 
 Run commands below:
@@ -37,5 +37,6 @@ If all is set then run:
 
 After running this you'll have a server up and running and two openvpn config files `linux.ovpn` and `mac.ovpn`
 downloaded in `compute/vpn/ansinle/clients` folder. Now you can use them to browse internet privately. For linux you can
-set up OpenVPN tunnel in settings, for mac I prefer [Viscosity](https://www.sparklabs.com/viscosity/). If you'd like to
-add more clients, change `ovpn.env` and run `(cd compute/vpn && ./configure run openvpn_clients)` 
+set up OpenVPN tunnel in settings, for mac I prefer [Viscosity](https://www.sparklabs.com/viscosity/).
+
+If you'd like to add more clients, change `ovpn.env` and run `(cd compute/vpn && ./configure run openvpn_clients)` 
