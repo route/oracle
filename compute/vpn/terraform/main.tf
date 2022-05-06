@@ -15,11 +15,6 @@ provider "oci" {
   region           = var.region
 }
 
-data "oci_identity_availability_domain" "ad" {
-  compartment_id = var.tenancy_ocid
-  ad_number      = 1
-}
-
 resource "oci_core_instance" "vpn" {
   availability_domain = data.oci_identity_availability_domain.ad.name
   compartment_id      = var.compartment_ocid
@@ -32,7 +27,7 @@ resource "oci_core_instance" "vpn" {
   }
 
   create_vnic_details {
-    subnet_id                 = oci_core_subnet.default.id
+    subnet_id                 = var.oci_core_subnet_id
     display_name              = "Default"
     assign_public_ip          = true
     assign_private_dns_record = true

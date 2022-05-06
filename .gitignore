@@ -1,9 +1,9 @@
 .idea
-*.pem
-hosts
 *.tfstate
 *.tfstate.backup
-*.ovpn
 .terraform
 terraform.tfvars
-environment
+hosts
+*.env
+*.ovpn
+*.pem

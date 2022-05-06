@@ -1,0 +1,105 @@
+#!/bin/sh
+
+. ./ovpn.env
+. ./gre.env
+
+get_ip()
+{
+  eval "cd terraform && terraform output -json instance_public_ip 2>/dev/null"
+}
+
+generate_ansible_hosts()
+{
+  ip=$(get_ip)
+  if [ -z "$ip" ]; then
+    echo "Terraform didn't return ip address, exiting..."
+    exit 1
+  fi
+
+  hosts_file="./ansible/hosts"
+
+  cat <<EOF > $hosts_file
+[vpn]
+$ip
+
+[all:vars]
+server_ip=$ip
+clients='$OPENVPN_CLIENTS'
+ansible_ssh_user=$OPENVPN_ANSIBLE_SSH_USER
+easy_rsa_version=$OPENVPN_EASY_RSA_VERSION
+easy_rsa_country=$OPENVPN_EASY_RSA_COUNTRY
+easy_rsa_province=$OPENVPN_EASY_RSA_PROVINCE
+easy_rsa_city=$OPENVPN_EASY_RSA_CITY
+easy_rsa_org=$OPENVPN_EASY_RSA_ORG
+easy_rsa_email=$OPENVPN_EASY_RSA_EMAIL
+easy_rsa_ou=$OPENVPN_EASY_RSA_OU
+easy_rsa_key_size=$OPENVPN_EASY_RSA_KEY_SIZE
+easy_rsa_ca_expire=$OPENVPN_EASY_RSA_CA_EXPIRE
+easy_rsa_cert_expire=$OPENVPN_EASY_RSA_CERT_EXPIRE
+openvpn_network=$OPENVPN_NETWORK
+openvpn_subnetmask=$OPENVPN_SUBNETMASK
+openvpn_route_network=$OPENVPN_ROUTE_NETWORK
+openvpn_route_subnetmask=$OPENVPN_ROUTE_SUBNETMASK
+openvpn_dns_1=$OPENVPN_DNS_1
+openvpn_dns_2=$OPENVPN_DNS_2
+gre_remote_ip=$GRE_REMOTE_IP
+gre_inner_ip=$GRE_INNER_IP
+EOF
+}
+
+run_ansible()
+{
+  case $1 in
+    openvpn_setup)
+      run_ansible_openvpn_setup
+      ;;
+    openvpn_clients)
+      run_ansible_openvpn_clients
+      ;;
+    gre)
+      run_ansible_gre
+      ;;
+    wireguard)
+      run_ansible_wireguard
+      ;;
+  esac
+}
+
+run_ansible_openvpn_setup()
+{
+  (cd ansible/openvpn && ansible-playbook -i ../hosts setup.yml)
+}
+
+run_ansible_openvpn_clients()
+{
+  (cd ansible/openvpn && ansible-playbook -i ../hosts clients.yml)
+}
+
+run_ansible_gre()
+{
+  (cd ansible/gre && ansible-playbook -i ../hosts setup.yml)
+}
+
+run_ansible_wireguard()
+{
+  (cd ansible/wireguard && ansible-playbook -i ../hosts setup.yml)
+}
+
+key="$1"
+case $key in
+  generate)
+    generate_ansible_hosts
+    exit 0
+    ;;
+  run)
+    generate_ansible_hosts
+    run_ansible "$2"
+    exit 0
+    ;;
+  *)
+    generate_ansible_hosts
+    run_ansible "openvpn_setup"
+    run_ansible "openvpn_clients"
+    exit 0
+    ;;
+esac

@@ -45,3 +45,12 @@ variable "instance_image_ocid" {
 variable "instance_ssh_public_key" {
   type = string
 }
+
+variable "oci_core_subnet_id" {
+  type = string
+}
+
+data "oci_identity_availability_domain" "ad" {
+  compartment_id = var.tenancy_ocid
+  ad_number      = 1
+}

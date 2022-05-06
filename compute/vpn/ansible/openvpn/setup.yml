@@ -28,7 +28,7 @@
 
     - name: Copy vars file
       template:
-        src: ./configs/vars.j2
+        src: ../configs/vars.j2
         dest: ~/EasyRSA-{{ easy_rsa_version }}/vars
 
     - name: Generate server keys
@@ -62,7 +62,7 @@
 
     - name: Configure server
       template:
-        src: ./configs/server.conf.j2
+        src: ../configs/server.conf.j2
         dest: /etc/openvpn/server.conf
       become: yes
 
@@ -77,18 +77,18 @@
 
     - name: Get default interface
       shell: ip route | grep default | awk '{print $5}'
-      register: iface
+      register: default_interface
 
     - name: Configure iptables rules
       template:
-        src: ./configs/rules.v4.j2
+        src: ../configs/rules.v4.j2
         dest: /etc/iptables/rules.v4
         owner: root
         group: root
         mode: '0644'
       become: yes
 
-    - name: Apply iptable rules
+    - name: Apply iptables rules
       shell: iptables-restore < /etc/iptables/rules.v4
       become: yes
 

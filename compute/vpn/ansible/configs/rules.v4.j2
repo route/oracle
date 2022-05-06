@@ -3,7 +3,7 @@
 :INPUT ACCEPT [0:0]
 :OUTPUT ACCEPT [0:0]
 :POSTROUTING ACCEPT [0:0]
--A POSTROUTING -o {{ iface.stdout }} -j MASQUERADE
+-A POSTROUTING -o {{ default_interface.stdout }} -j MASQUERADE
 COMMIT
 
 *filter

@@ -1,0 +1,64 @@
+#!/bin/sh
+
+. ./tf.env
+
+generate_tfvars_vcn()
+{
+  tfvars_file="./terraform.tfvars"
+
+  cat <<EOF > $tfvars_file
+tenancy_ocid     = "$TENANCY_OCID"
+compartment_ocid = "$COMPARTMENT_OCID"
+user_ocid        = "$USER_OCID"
+fingerprint      = "$FINGERPRINT"
+private_key_path = "$PRIVATE_KEY_PATH"
+region           = "$REGION"
+EOF
+}
+
+generate_tfvars_compute_vpn()
+{
+  tfvars_file="./terraform.tfvars"
+
+  cat <<EOF > $tfvars_file
+tenancy_ocid            = "$TENANCY_OCID"
+compartment_ocid        = "$COMPARTMENT_OCID"
+user_ocid               = "$USER_OCID"
+fingerprint             = "$FINGERPRINT"
+private_key_path        = "$PRIVATE_KEY_PATH"
+instance_ssh_public_key = "$INSTANCE_SSH_PUBLIC_KEY"
+region                  = "$REGION"
+instance_display_name   = "$INSTANCE_DISPLAY_NAME"
+instance_shape          = "$INSTANCE_SHAPE"
+instance_cpu            = $INSTANCE_CPU
+instance_memory         = $INSTANCE_MEMORY
+instance_image_ocid     = "$INSTANCE_IMAGE_OCID"
+oci_core_subnet_id      = $1
+EOF
+}
+
+run_terraform()
+{
+  terraform init && terraform apply
+}
+
+get_oci_core_subnet_id()
+{
+  eval "terraform output -json oci_core_subnet_id 2>/dev/null"
+}
+
+run()
+{
+  cd vcn || exit 1
+  generate_tfvars_vcn
+  run_terraform
+  oci_core_subnet_id=$(get_oci_core_subnet_id)
+
+  cd ../compute/vpn/terraform || exit 1
+  generate_tfvars_compute_vpn "$oci_core_subnet_id"
+  run_terraform
+  cd ../
+  ./configure
+}
+
+run

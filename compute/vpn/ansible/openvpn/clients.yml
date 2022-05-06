@@ -15,7 +15,7 @@
 
     - name: Copy client config template
       template:
-        src: ./configs/client.ovpn.j2
+        src: ../configs/client.ovpn.j2
         dest: ~/EasyRSA-{{ easy_rsa_version }}/clients/template.ovpn
 
     - name: Inject client keys
