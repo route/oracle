@@ -1,0 +1,9 @@
+network:
+  version: 2
+  tunnels:
+    {{ gre_tunnel_name }}:
+      mode: gre
+      remote: {{ gre_remote_ip }}
+      local: {{ local_ip.stdout }}
+      addresses:
+        - {{ gre_local_subnet }}

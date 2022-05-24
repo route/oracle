@@ -1,67 +1,60 @@
 - hosts: all
   gather_facts: false
-  vars:
-    tunnel_name: gre1
   tasks:
-#    - name: Apt update and upgrade
-#      apt:
-#        upgrade: yes
-#        update_cache: yes
-#        force_apt_get: yes
-#        cache_valid_time: 3600
-#      become: yes
-#
-#    - name: Forward traffic
-#      sysctl:
-#        name: net.ipv4.ip_forward
-#        value: '1'
-#        sysctl_set: yes
-#        state: present
-#        reload: yes
-#      become: yes
-#
-#    - name: Get local interface
-#      shell: ip route | grep default | awk '{print $5}'
-#      register: default_interface
-#
-#    - name: Get local ip
-#      shell: ip -f inet a l {{ default_interface.stdout }} | awk '/inet/ {print $2}' | cut -d/ -f1
-#      register: local_ip
-#
-#    - name: Configure iptables rules
-#      template:
-#        src: ../configs/rules.v4.j2
-#        dest: /etc/iptables/rules.v4
-#        owner: root
-#        group: root
-#        mode: '0644'
-#      become: yes
-#
-#    - name: Apply iptable rules
-#      shell: iptables-restore < /etc/iptables/rules.v4
-#      become: yes
-#
-#    - name: Add the ip_gre module
-#      shell: modprobe ip_gre
-#      become: yes
-#
-#    - name: Add gre tunnel
-#      shell: ip tunnel add {{ tunnel_name }} mode gre remote {{ gre_remote_ip }} local {{ local_ip.stdout }}
-#      become: yes
-#
-#    - name: Add ip addr
-#      shell: ip addr add {{ gre_inner_ip }} dev {{ tunnel_name }}
-#      become: yes
-#
-#    - name: Set up gre link
-#      shell: ip link set {{ tunnel_name }} up
-#      become: yes
-#
+    - name: Apt update and upgrade
+      apt:
+        upgrade: yes
+        update_cache: yes
+        force_apt_get: yes
+        cache_valid_time: 3600
+      become: yes
+
+    - name: Forward traffic
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        sysctl_set: yes
+        state: present
+        reload: yes
+      become: yes
+
+    - name: Get default interface
+      shell: ip route | grep default | awk '{print $5}'
+      register: default_interface
+
+    - name: Get local ip
+      shell: ip -f inet a l {{ default_interface.stdout }} | awk '/inet/ {print $2}' | cut -d/ -f1
+      register: local_ip
+
+    - name: Configure iptables rules
+      template:
+        src: ../configs/rules.v4.j2
+        dest: /etc/iptables/rules.v4
+        owner: root
+        group: root
+        mode: '0644'
+      become: yes
+
+    - name: Apply iptables rules
+      shell: iptables-restore < /etc/iptables/rules.v4
+      become: yes
+
+    - name: Add the ip_gre module
+      shell: modprobe ip_gre
+      become: yes
+
+    - name: Copy gre tunnel netplan
+      template:
+        src: ../configs/90-gre-tunnel.yaml.j2
+        dest: /etc/netplan/90-gre-tunnel.yaml
+        owner: root
+        group: root
+        mode: '0644'
+      become: yes
+
     - name: Gre tunnel keepalive
       cron:
         name: "gre tunnel keepalive"
         minute: "*"
         hour: "*"
-        job: "/usr/bin/ping -c 10 -i 5 {{ gre_inner_ip_2 }} >/dev/null 2>&1"
-
-#  /ip firewall nat add chain=srcnat action=masquerade out-interface=gre-tunnel1
+        job: "/usr/bin/ping -c 10 -i 5 {{ gre_local_peer }} >/dev/null 2>&1"

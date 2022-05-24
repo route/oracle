@@ -42,8 +42,10 @@ openvpn_route_network=$OPENVPN_ROUTE_NETWORK
 openvpn_route_subnetmask=$OPENVPN_ROUTE_SUBNETMASK
 openvpn_dns_1=$OPENVPN_DNS_1
 openvpn_dns_2=$OPENVPN_DNS_2
+gre_tunnel_name=$GRE_TUNNEL_NAME
 gre_remote_ip=$GRE_REMOTE_IP
-gre_inner_ip=$GRE_INNER_IP
+gre_local_subnet=$GRE_LOCAL_SUBNET
+gre_local_peer=$GRE_LOCAL_PEER
 EOF
 }
 
