@@ -32,7 +32,7 @@ Now it's time to set up BGP dynamic routing to pass through tunnel only blocked 
 ```
 
 Here are the posts for more info:
-[Настройка BGP для обхода блокировок, или «Как я перестал бояться и полюбил РКН»](https://habr.com/ru/post/354282/)
-[Настройка BGP для обхода блокировок, версия 2, «не думать»](https://habr.com/ru/post/359268/)
-[Настройка BGP для обхода блокировок, версия 3, без VPS](https://habr.com/ru/post/413049/)
-[Настройка BGP для обхода блокировок, версия 3.1. И немного Q&A](https://habr.com/ru/post/549282/)
+* [Настройка BGP для обхода блокировок, или «Как я перестал бояться и полюбил РКН»](https://habr.com/ru/post/354282/)
+* [Настройка BGP для обхода блокировок, версия 2, «не думать»](https://habr.com/ru/post/359268/)
+* [Настройка BGP для обхода блокировок, версия 3, без VPS](https://habr.com/ru/post/413049/)
+* [Настройка BGP для обхода блокировок, версия 3.1. И немного Q&A](https://habr.com/ru/post/549282/)
